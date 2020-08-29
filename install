@@ -1,0 +1,12 @@
+#!/bin/zsh
+
+set -x
+
+gradle clean assembleShadowDist
+cd .. && mv $(find . -regex '.*/konsul-shadow-[0-9.]*.zip') $(pwd)
+rm -rf konsul
+unzip $(find . -regex '.*/konsul-shadow-[0-9.]*.zip') && rm $(find . -regex '.*/konsul-shadow-[0-9.]*.zip')
+mv $(find . -regex '.*/bin') $HOME/konsul/bin && mv $(find . -regex '.*/lib') $HOME/konsul/ && rm -rf $(find . -regex '.*/konsul-shadow-[0-9.]*')
+export PATH=$(find . -regex '.*/bin'):$PATH
+
+set +x
