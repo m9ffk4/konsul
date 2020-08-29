@@ -21,6 +21,7 @@ application {
 tasks.withType<ShadowJar> {
     manifest {
         attributes["Main-Class"] = application.mainClassName
+        attributes["Implementation-Version"] = project.version
     }
 }
 
