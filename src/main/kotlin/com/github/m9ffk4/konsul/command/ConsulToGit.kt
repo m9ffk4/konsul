@@ -15,30 +15,40 @@ class ConsulToGit(
     name = "consulToGit",
     help = "Sync Consul -> Git"
 ) {
-    private val logger = KotlinLogging.logger {}
-
     override fun run() {
-        consul.getKVKeysOnly(prefix, null, token).value
-            .filter { !it.endsWith("/") }
+        val values = if (token.isNotBlank()) {
+            consul.getKVKeysOnly(prefix, null, token).value
+        } else {
+            consul.getKVKeysOnly(prefix).value
+        }
+        values.filter { !it.endsWith("/") }
             .forEach {
                 // Получаем значение ключа из консула
-                val value = consul.getKVValue(it, token).value.decodedValue
+                val value = if (token.isNotBlank()) {
+                    consul.getKVValue(it, token).value.decodedValue
+                } else {
+                    consul.getKVValue(it).value.decodedValue
+                }
                 // Формируем имя файла
                 val fileName = "$it${getFileFormat(value)}"
                     .replace("$prefix/", "")
-                logger.info {
+                println(
                     "$operation [${if (dry) "X" else "V"}] | " +
                         "$prefix${it.replace(prefix, "")} -> ${File(workDir).absolutePath}/$fileName"
+                )
+                if (dry) {
+                    return
                 }
-                if (!dry) {
-                    // Генерируем файл с содержимым
-                    File("$workDir/$fileName")
-                        .also { file -> file.parentFile.mkdirs() }
-                        .writeText(value, Charsets.UTF_8)
-                }
+                // Генерируем файл с содержимым
+                File("$workDir/$fileName")
+                    .also { file -> file.parentFile.mkdirs() }
+                    .writeText(value, Charsets.UTF_8)
             }
     }
 
+    /**
+     * Определяет формат value по его содержимому (строка / json / yaml)
+     */
     private fun getFileFormat(text: String) = when {
         text.startsWith("{") or text.startsWith("[") -> ".json"
         (!text.startsWith("{") or !text.startsWith("[")) and text.contains(": ") -> ".yml"

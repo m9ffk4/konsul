@@ -19,28 +19,30 @@ private val banner = String(
 )
 private val version = {}.javaClass.`package`.implementationVersion ?: "0.0.0"
 
-private val log = KotlinLogging.logger { }
 lateinit var consul: ConsulClient
 lateinit var token: String
 lateinit var prefix: String
 lateinit var workDir: String
-private var dry = false
+var dry = false
 
 // TODO Будет задаваться во время выполнения операции, после добавления стратегий (create/delete/update).
 private const val operation = "update"
 
 object Default {
     val workDir = "${System.getProperty("user.home")}/konsul/config"
+    const val dry = false
 
     object Consul {
         const val host = "http://localhost"
         const val port = 8500
+        const val token = ""
+        const val prefix = ""
     }
 }
 
 class Konsul : CliktCommand(
     name = "Konsul",
-    help = "Consul CLI for config synchronization Consul -> Git -> Consul",
+    help = "Consul CLI for synchronization Consul -> Git -> Consul",
     printHelpOnEmptyArgs = true
 ) {
     private val host by option(
@@ -58,10 +60,12 @@ class Konsul : CliktCommand(
         names = arrayOf("-t", "--token"),
         help = "Consul ACL token"
     )
+        .default(Consul.token)
     private val pr by option(
         names = arrayOf("-pr", "--prefix"),
         help = "Consul KV prefix"
     )
+        .default(Consul.prefix)
     private val wd by option(
         names = arrayOf("-w", "--workdir"),
         help = "The path to the directory where the configs will be saved"
@@ -71,22 +75,20 @@ class Konsul : CliktCommand(
         names = arrayOf("-d", "--dry"),
         help = "Show the result of an operation without executing it\n"
     )
-        .flag(default = false)
+        .flag(default = Default.dry)
 
     init {
-        log.info { banner.replace("{}", version) }
+        println(banner.replace("{}", version))
         versionOption(names = setOf("-v", "--version"), version = version)
     }
 
     override fun run() {
         consul = ConsulClient(host, port)
-        token = if (t.isNullOrEmpty()) throw IllegalArgumentException("Where fucking Consul ACL token?!")
-        else t.toString()
-        prefix = if (pr.isNullOrEmpty()) throw IllegalArgumentException("Where fucking Consul KV prefix?!")
-        else pr.toString()
+        token = t
+        prefix = pr
         workDir = wd
         dry = d
-        log.info {
+        println(
             """Run $commandName with values:
             |   consul.host = $host
             |   consul.port = $port
@@ -96,7 +98,7 @@ class Konsul : CliktCommand(
             |   dry = $dry
             |
         """.trimMargin()
-        }
+        )
     }
 }
 
