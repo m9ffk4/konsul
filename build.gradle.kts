@@ -1,11 +1,13 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN
 
 plugins {
     jacoco
     id("application")
-    kotlin("jvm") version "1.4.0"
+    kotlin("jvm") version "1.4.10"
     id("io.gitlab.arturbosch.detekt") version "1.12.0"
+    id("org.jlleitschuh.gradle.ktlint") version "9.3.0"
     id("com.github.ben-manes.versions") version "0.29.0"
     id("com.github.johnrengelman.shadow") version "6.0.0"
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
@@ -30,9 +32,17 @@ tasks.withType<KotlinCompile> {
 }
 
 detekt {
-    toolVersion = "1.1.1"
-    input = files("src/main/kotlin")
-    config = files("${rootProject.projectDir.toPath()}/detekt.yml")
+    input = files("src/main/kotlin", "src/test/kotlin")
+}
+
+ktlint {
+    version.set("0.38.1")
+    verbose.set(true)
+    outputToConsole.set(true)
+    outputColorName.set("RED")
+    reporters {
+        reporter(PLAIN)
+    }
 }
 
 repositories {
@@ -44,21 +54,22 @@ repositories {
 
 dependencies {
     // Kotlin
-    implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
+
     // CLI args
     implementation(group = "com.github.ajalt", name = "clikt", version = "2.8.0")
+
     // Consul
     implementation(group = "com.ecwid.consul", name = "consul-api", version = "1.4.5")
-    // Log
-    implementation(group = "org.slf4j", name = "slf4j-simple", version = "+")
-    implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.8.3")
+
     // Yaml
     implementation(group = "com.jayway.jsonpath", name = "json-path", version = "2.4.0")
     implementation(group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version = "2.11.2")
+
     // JSON
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-core", version = "2.11.2")
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = "2.11.2")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 private val versionRegex = "version = \"(\\d.\\d.\\d)\"".toRegex()
@@ -108,4 +119,13 @@ tasks {
 fun replaceVersionInBuildFile(newVersion: String) {
     val file = String(buildGradle.readBytes()).replaceFirst(versionRegex, "version = \"$newVersion\"")
     buildGradle.writeText(file, Charsets.UTF_8)
+}
+
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "1.8"
 }

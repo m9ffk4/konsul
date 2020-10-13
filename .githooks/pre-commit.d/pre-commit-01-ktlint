@@ -1,0 +1,22 @@
+#!/bin/sh
+
+echo "Running ktlint check..."
+
+# Получаем файлы, которые были изменены
+STAGED_PROJECT_FILES=$(git diff --name-only --cached --relative)
+# Выполняем gradle ktlintFormat
+OUTPUT=$(gradle ktlintFormat)
+EXIT_CODE=$?
+
+echo "$STAGED_PROJECT_FILES" | xargs git add || true
+
+if [ $EXIT_CODE -ne 0 ]; then
+  echo "$OUTPUT"
+  echo "***********************************************"
+  echo "             ktlintFormat failed               "
+  echo " Please fix the above issues before committing "
+  echo "***********************************************"
+  exit $EXIT_CODE
+else
+  echo "ktlint completed successfully"
+fi

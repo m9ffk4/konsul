@@ -1,0 +1,17 @@
+#!/bin/sh
+
+echo "Running detekt check..."
+
+OUTPUT=$(gradle detekt)
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+  echo "$OUTPUT"
+  echo "***********************************************"
+  echo "                detekt failed                  "
+  echo " Please fix the above issues before committing "
+  echo "***********************************************"
+  exit $EXIT_CODE
+else
+  echo "detekt completed successfully"
+fi

@@ -2,15 +2,14 @@ package com.github.m9ffk4.konsul.command
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.m9ffk4.konsul.consul
+import com.github.m9ffk4.konsul.dry
+import com.github.m9ffk4.konsul.operation
 import com.github.m9ffk4.konsul.prefix
 import com.github.m9ffk4.konsul.token
 import com.github.m9ffk4.konsul.workDir
 import java.io.File
 
-class GitToConsul(
-    private val dry: Boolean,
-    private val operation: String,
-) : CliktCommand(
+class GitToConsul : CliktCommand(
     name = "gitToConsul",
     help = "Sync Git -> Consul"
 ) {
@@ -29,7 +28,7 @@ class GitToConsul(
 
                 println("$operation [${if (dry) "X" else "V"}] | $it -> $prefix$key")
                 if (dry) {
-                    return
+                    return@forEach
                 }
                 // Создаем запись в consul
                 if (token.isNotBlank()) {

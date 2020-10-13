@@ -12,11 +12,11 @@ import com.github.m9ffk4.konsul.Default.Consul
 import com.github.m9ffk4.konsul.command.ConsulToGit
 import com.github.m9ffk4.konsul.command.CopyToConsul
 import com.github.m9ffk4.konsul.command.GitToConsul
-import mu.KotlinLogging
 
 private val banner = String(
     {}.javaClass.getResourceAsStream("/banner.txt").readAllBytes()
 )
+// Работает только в собранной jar ке
 private val version = {}.javaClass.`package`.implementationVersion ?: "0.0.0"
 
 lateinit var consul: ConsulClient
@@ -26,7 +26,8 @@ lateinit var workDir: String
 var dry = false
 
 // TODO Будет задаваться во время выполнения операции, после добавления стратегий (create/delete/update).
-private const val operation = "update"
+@Suppress("TopLevelPropertyNaming")
+const val operation = "update"
 
 object Default {
     val workDir = "${System.getProperty("user.home")}/konsul/config"
@@ -104,8 +105,8 @@ class Konsul : CliktCommand(
 
 fun main(args: Array<String>) = Konsul()
     .subcommands(
-        ConsulToGit(dry = dry, operation = operation),
-        GitToConsul(dry = dry, operation = operation),
-        CopyToConsul(dry = dry, operation = operation)
+        ConsulToGit(),
+        GitToConsul(),
+        CopyToConsul()
     )
     .main(args)

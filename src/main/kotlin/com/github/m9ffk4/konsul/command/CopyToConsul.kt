@@ -7,6 +7,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.m9ffk4.konsul.consul
+import com.github.m9ffk4.konsul.dry
+import com.github.m9ffk4.konsul.operation
 import com.github.m9ffk4.konsul.prefix
 import com.github.m9ffk4.konsul.token
 import com.github.m9ffk4.konsul.workDir
@@ -14,10 +16,8 @@ import com.jayway.jsonpath.JsonPath
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 
-class CopyToConsul(
-    private val dry: Boolean,
-    private val operation: String,
-) : CliktCommand(
+@Suppress("TooGenericExceptionCaught")
+class CopyToConsul : CliktCommand(
     name = "copyToConsul",
     help = "Sync Git -> Consul, with can change some values"
 ) {
@@ -75,7 +75,7 @@ class CopyToConsul(
 
                 println("[$operation ${if (dry) "X" else "V"}] | $it -> $prefix$key")
                 if (dry) {
-                    return
+                    return@forEach
                 }
                 // Создаем запись в consul
                 if (token.isNotBlank()) {

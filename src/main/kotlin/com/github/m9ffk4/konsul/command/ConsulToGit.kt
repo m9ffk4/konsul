@@ -2,16 +2,14 @@ package com.github.m9ffk4.konsul.command
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.m9ffk4.konsul.consul
+import com.github.m9ffk4.konsul.dry
+import com.github.m9ffk4.konsul.operation
 import com.github.m9ffk4.konsul.prefix
 import com.github.m9ffk4.konsul.token
 import com.github.m9ffk4.konsul.workDir
-import mu.KotlinLogging
 import java.io.File
 
-class ConsulToGit(
-    private val dry: Boolean,
-    private val operation: String,
-) : CliktCommand(
+class ConsulToGit : CliktCommand(
     name = "consulToGit",
     help = "Sync Consul -> Git"
 ) {
@@ -24,10 +22,10 @@ class ConsulToGit(
         values.filter { !it.endsWith("/") }
             .forEach {
                 // Получаем значение ключа из консула
-                val value = if (token.isNotBlank()) {
-                    consul.getKVValue(it, token).value.decodedValue
-                } else {
-                    consul.getKVValue(it).value.decodedValue
+                val value = when {
+                    token.isBlank() -> consul.getKVValue(it).value.decodedValue ?: ""
+                    token.isNotBlank() -> consul.getKVValue(it, token).value.decodedValue ?: ""
+                    else -> throw NoSuchElementException("Не очень понятно что произошло")
                 }
                 // Формируем имя файла
                 val fileName = "$it${getFileFormat(value)}"
@@ -37,7 +35,7 @@ class ConsulToGit(
                         "$prefix${it.replace(prefix, "")} -> ${File(workDir).absolutePath}/$fileName"
                 )
                 if (dry) {
-                    return
+                    return@forEach
                 }
                 // Генерируем файл с содержимым
                 File("$workDir/$fileName")
